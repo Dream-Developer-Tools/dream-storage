@@ -1,5 +1,5 @@
-#ifndef DSTORAGE_DSTORAGEOBJECTS_H
-#define DSTORAGE_DSTORAGEOBJECTS_H
+#ifndef DSTORAGE_DSTORAGE_OBJECTS_H
+#define DSTORAGE_DSTORAGE_OBJECTS_H
 
 #include <string>
 #include <vector>
@@ -71,6 +71,12 @@ namespace DreamStorage {
                     case STRING:
                         new (&stringValue) std::string(other.stringValue);
                         break;
+                    case LIST:
+                        listValue = other.listValue;
+                        break;
+                    case OBJECT:
+                        objectValue = other.objectValue;
+                        break;
                 }
             }
             return *this;
@@ -99,7 +105,7 @@ namespace DreamStorage {
 
         Value() : type(INT), intValue(0) {};
 
-        Value(const ValueInternal& other);
+        explicit Value(const ValueInternal& other);
 
         ~Value() {
             if (type == STRING) {
@@ -110,6 +116,9 @@ namespace DreamStorage {
 
 
     class Object {
+    private:
+        std::vector<uint_fast8_t> buffer;
+        bool didBufferChange = false;
     public:
         std::unordered_map<std::string, ValueInternal*> valueMap;
 
@@ -132,11 +141,14 @@ namespace DreamStorage {
     };
 
     class List {
+    private:
+        std::vector<uint_fast8_t> buffer;
+        bool didBufferChange = false;
     public:
         std::vector<ValueInternal> list;
 
         List();
-        List(List* other) : list(other->list) {}
+        explicit List(List* other) : list(other->list) {};
         ~List();
 
         void setFromBuffer(std::vector<uint_fast8_t> buffer);
@@ -147,7 +159,7 @@ namespace DreamStorage {
         void addValue(List* value);
         void addValue(Object* value);
 
-        ValueInternal getValue(int index);
+        Value* getValue(int index);
 
         void removeValue(int index);
 

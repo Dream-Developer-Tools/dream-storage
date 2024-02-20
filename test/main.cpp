@@ -1,5 +1,10 @@
 #include <dstorage.h>
 #include <iostream>
+#include <chrono>
+#include <fstream>
+
+
+#define LOOP_COUNT 10000000
 
 int main() {
     auto* value = new DreamStorage::Object();
@@ -14,9 +19,14 @@ int main() {
     object->setStringValue("name", "Dream");
     value->setObjectValue("object", object);
 
-    DreamStorage::writeToFile(value, "test.txt");
-    DreamStorage::Object* readValue = DreamStorage::readFromFile("test.txt");
-    std::cout << readValue->getValue("name")->stringValue << std::endl;
-    std::cout << readValue->getValue("list")->listValue->list[0].stringValue << std::endl;
+    // time how long it takes to write and read from a file with precision of ms
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < LOOP_COUNT; i++) {
+        std::vector<uint_fast8_t> buffer = value->asBuffer();
+        auto* v = new DreamStorage::Object();
+        v->setFromBuffer(buffer);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to write and read from file: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
     return 0;
 }

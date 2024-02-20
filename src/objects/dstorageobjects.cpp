@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "dstorageobjects.h"
 #include "buffer/frombuffer.h"
+#include "buffer/tobuffer.h"
 
 namespace DreamStorage {
 
@@ -28,10 +29,12 @@ namespace DreamStorage {
 
     Object::Object() {
         valueMap = std::unordered_map<std::string, ValueInternal *>();
+        buffer = std::vector<uint_fast8_t>();
     }
 
     Object::~Object() {
         valueMap.clear();
+        buffer.clear();
     }
 
     void Object::setStringValue(const std::string &key, const std::string &value) {
@@ -39,6 +42,7 @@ namespace DreamStorage {
         v->type = STRING;
         new(&v->stringValue) std::string(value);
         valueMap[key] = v;
+        didBufferChange = true;
     }
 
     void Object::setIntValue(const std::string &key, int value) {
@@ -46,6 +50,7 @@ namespace DreamStorage {
         v->type = INT;
         new(&v->intValue) int(value);
         valueMap[key] = v;
+        didBufferChange = true;
     }
 
     void Object::setBoolValue(const std::string &key, bool value) {
@@ -53,6 +58,7 @@ namespace DreamStorage {
         v->type = BOOL;
         new(&v->boolValue) bool(value);
         valueMap[key] = v;
+        didBufferChange = true;
     }
 
     List::List() {
@@ -82,48 +88,17 @@ namespace DreamStorage {
     }
 
     std::vector<uint_fast8_t> List::asBuffer() {
-        std::vector<uint_fast8_t> buffer = std::vector<uint_fast8_t>();
-        for (const ValueInternal &val: list) {
-            switch (val.type) {
-                case STRING:
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::STRING_BEGIN));
-                    for (char c: val.stringValue) {
-                        buffer.push_back(c);
-                    }
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::STRING_END));
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::END_OF_LINE));
-                    break;
-                case INT:
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::NUMBER_BEGIN));
-                    for (char c: std::to_string(val.intValue)) {
-                        buffer.push_back(c);
-                    }
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::NUMBER_END));
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::END_OF_LINE));
-                    break;
-                case BOOL:
-                    if (val.boolValue) {
-                        buffer.push_back(static_cast<uint_fast8_t>(Token::TRUE));
-                    } else {
-                        buffer.push_back(static_cast<uint_fast8_t>(Token::FALSE));
-                    }
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::END_OF_LINE));
-                    break;
-                case LIST:
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::LIST_BEGIN));
-                    for (uint_fast8_t byte: val.listValue) {
-                        buffer.push_back(byte);
-                    }
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::LIST_END));
-                    buffer.push_back(static_cast<uint_fast8_t>(Token::END_OF_LINE));
-                    break;
-            }
+        if (!didBufferChange) {
+            return buffer;
         }
-        return buffer;
+        return listToBuffer(this);
     }
 
     std::vector<uint_fast8_t> Object::asBuffer() {
-
+        if (!didBufferChange) {
+            return buffer;
+        }
+        return objectToBuffer(this);
     }
 
     void Object::setListValue(const std::string &key, List *value) {
@@ -131,6 +106,7 @@ namespace DreamStorage {
         v->type = LIST;
         new(&v->listValue) std::vector<uint_fast8_t>(value->asBuffer());
         valueMap[key] = v;
+        didBufferChange = true;
     }
 
     void Object::setObjectValue(const std::string &key, Object *value) {
@@ -138,6 +114,7 @@ namespace DreamStorage {
         v->type = OBJECT;
         new(&v->objectValue) std::vector<uint_fast8_t>(value->asBuffer());
         valueMap[key] = v;
+        didBufferChange = true;
     }
 
     void List::addValue(const std::string &value) {
@@ -145,17 +122,88 @@ namespace DreamStorage {
         v.type = STRING;
         new(&v.stringValue) std::string(value);
         list.push_back(v);
+        didBufferChange = true;
     }
 
     List::~List() {
         list.clear();
+        buffer.clear();
     }
 
     void Object::setFromBuffer(std::vector<uint_fast8_t> buffer) {
         this->valueMap = objectFromBuffer(buffer)->valueMap;
+        didBufferChange = false;
+        this->buffer = buffer;
     }
 
     void List::setFromBuffer(std::vector<uint_fast8_t> buffer) {
         this->list = listFromBuffer(buffer)->list;
+        didBufferChange = false;
+        this->buffer = buffer;
+    }
+
+    void List::addValue(int value) {
+        ValueInternal v{};
+        v.type = INT;
+        new(&v.intValue) int(value);
+        list.push_back(v);
+        didBufferChange = true;
+    }
+
+    void List::addValue(bool value) {
+        ValueInternal v{};
+        v.type = BOOL;
+        new(&v.boolValue) bool(value);
+        list.push_back(v);
+        didBufferChange = true;
+    }
+
+    void List::addValue(List *value) {
+        ValueInternal v{};
+        v.type = LIST;
+        new(&v.listValue) std::vector<uint_fast8_t>(value->asBuffer());
+        list.push_back(v);
+        didBufferChange = true;
+    }
+
+    void List::addValue(Object *value) {
+        ValueInternal v{};
+        v.type = OBJECT;
+        new(&v.objectValue) std::vector<uint_fast8_t>(value->asBuffer());
+        list.push_back(v);
+        didBufferChange = true;
+    }
+
+    void List::removeValue(int index) {
+        list.erase(list.begin() + index);
+        didBufferChange = true;
+    }
+
+    void Object::removeValue(const std::string &key) {
+        valueMap.erase(key);
+        didBufferChange = true;
+    }
+
+    Value* List::getValue(int index) {
+        auto *value = &list[index];
+        auto *v = new Value();
+        v->type = value->type;
+        switch (value->type) {
+            case INT:
+                new(&v->intValue) int(value->intValue);
+                break;
+            case BOOL:
+                new(&v->boolValue) bool(value->boolValue);
+                break;
+            case STRING:
+                new(&v->stringValue) std::string(value->stringValue);
+                break;
+            case LIST:
+                v->listValue = new List();
+                v->listValue->setFromBuffer(value->listValue);
+                break;
+        }
+        return v;
     }
 }
+

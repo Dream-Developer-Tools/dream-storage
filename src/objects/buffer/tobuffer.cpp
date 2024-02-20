@@ -121,6 +121,14 @@ namespace DreamStorage {
                     buffer.push_back(static_cast<uint_fast8_t>(Token::LIST_END));
                     buffer.push_back(static_cast<uint_fast8_t>(Token::END_OF_LINE));
                     break;
+                case OBJECT:
+                    buffer.push_back(static_cast<uint_fast8_t>(Token::OBJECT_BEGIN));
+                    for (uint_fast8_t byte: val.objectValue) {
+                        buffer.push_back(byte);
+                    }
+                    buffer.push_back(static_cast<uint_fast8_t>(Token::OBJECT_END));
+                    buffer.push_back(static_cast<uint_fast8_t>(Token::END_OF_LINE));
+                    break;
             }
         }
         return buffer;

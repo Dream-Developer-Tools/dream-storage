@@ -1,8 +1,7 @@
 #include "frombuffer.h"
-#include "../dstorageobjects.h"
 
 
-DreamStorage::List* DreamStorage::listFromBuffer(std::vector<uint_fast8_t> buffer) {
+DreamStorage::List* DreamStorage::listFromBuffer(const std::vector<uint_fast8_t>& buffer) {
     auto* returnValue = new DreamStorage::List();
     std::vector<DreamStorage::ValueInternal> list;
     DreamStorage::ValueInternal v{};
@@ -10,7 +9,6 @@ DreamStorage::List* DreamStorage::listFromBuffer(std::vector<uint_fast8_t> buffe
     std::string numberValue;
     std::vector<uint_fast8_t> listValue;
     std::vector<uint_fast8_t> objectValue;
-    bool boolValue;
 
     for (uint_fast8_t byte : buffer) {
         switch (byte) {
@@ -70,6 +68,8 @@ DreamStorage::List* DreamStorage::listFromBuffer(std::vector<uint_fast8_t> buffe
                     case OBJECT:
                         objectValue.push_back(byte);
                         break;
+                    case BOOL:
+                        break;
                 }
                 break;
         }
@@ -78,7 +78,7 @@ DreamStorage::List* DreamStorage::listFromBuffer(std::vector<uint_fast8_t> buffe
     return returnValue;
 }
 
-DreamStorage::Object* DreamStorage::objectFromBuffer(std::vector<uint_fast8_t> buffer) {
+DreamStorage::Object* DreamStorage::objectFromBuffer(const std::vector<uint_fast8_t>& buffer) {
     auto* file = new DreamStorage::Object();
     bool isKey = true;
     bool isString = false;

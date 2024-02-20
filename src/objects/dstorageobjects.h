@@ -125,7 +125,7 @@ namespace DreamStorage {
         Object();
         ~Object();
 
-        void setFromBuffer(std::vector<uint_fast8_t> buffer);
+        void setFromBuffer(const std::vector<uint_fast8_t>& vector);
 
         void setIntValue(const std::string& key, int value);
         void setStringValue(const std::string& key, const std::string& value);
@@ -151,7 +151,7 @@ namespace DreamStorage {
         explicit List(List* other) : list(other->list) {};
         ~List();
 
-        void setFromBuffer(std::vector<uint_fast8_t> buffer);
+        void setFromBuffer(const std::vector<uint_fast8_t>& vector);
 
         void addValue(int value);
         void addValue(const std::string& value);

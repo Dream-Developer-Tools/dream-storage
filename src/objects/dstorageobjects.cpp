@@ -83,6 +83,10 @@ namespace DreamStorage {
                 v->listValue = new List();
                 v->listValue->setFromBuffer(value->listValue);
                 break;
+            case OBJECT:
+                v->objectValue = new Object();
+                v->objectValue->setFromBuffer(value->objectValue);
+                break;
         }
         return v;
     }
@@ -130,16 +134,16 @@ namespace DreamStorage {
         buffer.clear();
     }
 
-    void Object::setFromBuffer(std::vector<uint_fast8_t> buffer) {
-        this->valueMap = objectFromBuffer(buffer)->valueMap;
+    void Object::setFromBuffer(const std::vector<uint_fast8_t>& vector) {
+        this->valueMap = objectFromBuffer(vector)->valueMap;
         didBufferChange = false;
-        this->buffer = buffer;
+        this->buffer = vector;
     }
 
-    void List::setFromBuffer(std::vector<uint_fast8_t> buffer) {
-        this->list = listFromBuffer(buffer)->list;
+    void List::setFromBuffer(const std::vector<uint_fast8_t>& vector) {
+        this->list = listFromBuffer(vector)->list;
         didBufferChange = false;
-        this->buffer = buffer;
+        this->buffer = vector;
     }
 
     void List::addValue(int value) {
@@ -201,6 +205,10 @@ namespace DreamStorage {
             case LIST:
                 v->listValue = new List();
                 v->listValue->setFromBuffer(value->listValue);
+                break;
+            case OBJECT:
+                v->objectValue = new Object();
+                v->objectValue->setFromBuffer(value->objectValue);
                 break;
         }
         return v;

@@ -6,9 +6,9 @@
 #include "../dstorageobjects.h"
 
 namespace DreamStorage {
-    DreamStorage::Object *objectFromBuffer(std::vector<uint_fast8_t> buffer);
+    DreamStorage::Object *objectFromBuffer(const std::vector<uint_fast8_t>& buffer);
 
-    DreamStorage::List *listFromBuffer(std::vector<uint_fast8_t> buffer);
+    DreamStorage::List *listFromBuffer(const std::vector<uint_fast8_t>& buffer);
 }
 
 #endif

@@ -67,6 +67,9 @@ namespace DreamStorage {
 
     Value *Object::getValue(const std::string &key) {
         auto *value = valueMap[key];
+        if (value == nullptr) {
+            return nullptr;
+        }
         auto *v = new Value();
         v->type = value->type;
         switch (value->type) {
@@ -190,6 +193,9 @@ namespace DreamStorage {
 
     Value* List::getValue(int index) {
         auto *value = &list[index];
+        if (value == nullptr) {
+            return nullptr;
+        }
         auto *v = new Value();
         v->type = value->type;
         switch (value->type) {
